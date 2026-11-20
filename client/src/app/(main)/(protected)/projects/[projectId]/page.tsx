@@ -49,7 +49,7 @@ export default function ProjectPage() {
             toast.error("Nice! You've used your chat credits for the week. Upgrade your plan to continue chatting.", {
                 action: {
                     label: "Upgrade",
-                    onClick: () => router.push("/pricing"),
+                    onClick: () => router.push("/"),
                 },
             });
             sessionStorage.setItem(CHAT_CREDIT_TOAST_KEY, "true");

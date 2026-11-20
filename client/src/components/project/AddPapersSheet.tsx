@@ -263,7 +263,7 @@ export function AddPapersSheet() {
                                         <AlertTitle>Upload Limit Reached</AlertTitle>
                                         <AlertDescription>
                                             You have reached your paper upload limit. Please{" "}
-                                            <Link href="/pricing" className="font-bold underline">
+                                            <Link href="/" className="font-bold underline">
                                                 upgrade your plan
                                             </Link>{" "}
                                             to upload more papers.

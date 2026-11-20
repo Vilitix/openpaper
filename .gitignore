@@ -68,3 +68,12 @@ build_*tex.sh
 # deliberately COMMITTED. It is manufactured from the PDFs in
 # server/evals/seed_data/ by `scripts/dev build-fixture`, holds no real user
 # data, and has to be present for a fresh checkout to come up with usable data.
+
+# Local homelab deployment
+.env
+data/
+postgres-data/
+minio-data/
+server/.env
+jobs/.env
+client/.env.local

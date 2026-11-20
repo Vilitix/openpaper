@@ -400,7 +400,7 @@ export function SidePanelContent({
                 action: {
                     label: 'Upgrade',
                     onClick: () => {
-                        window.location.href = '/pricing';
+                        window.location.href = '/';
                     }
                 }
             });
@@ -1156,7 +1156,7 @@ export function SidePanelContent({
                                                                                 <DropdownMenuItem
                                                                                     key={modelKey}
                                                                                     onClick={() => {
-                                                                                        window.location.href = '/pricing';
+                                                                                        window.location.href = '/';
                                                                                     }}
                                                                                     className="flex items-center justify-between text-muted-foreground"
                                                                                 >
@@ -1166,7 +1166,7 @@ export function SidePanelContent({
                                                                             ))}
                                                                             <DropdownMenuItem
                                                                                 onClick={() => {
-                                                                                    window.location.href = '/pricing';
+                                                                                    window.location.href = '/';
                                                                                 }}
                                                                                 className="flex items-center justify-center mt-1 bg-blue-500 text-white focus:bg-blue-400 focus:text-white font-medium"
                                                                             >
@@ -1228,7 +1228,7 @@ export function SidePanelContent({
                                                         </HoverCardContent>
                                                     </HoverCard>
                                                     <Link
-                                                        href="/pricing"
+                                                        href="/"
                                                         className="text-blue-500 hover:text-blue-700 ml-1"
                                                     >
                                                         Upgrade

@@ -7,6 +7,7 @@ import uuid
 from typing import Tuple
 
 import boto3 # type: ignore
+from botocore.config import Config # type: ignore
 from botocore.exceptions import ClientError # type: ignore
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,8 @@ AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME")
 CLOUDFLARE_BUCKET_NAME = os.environ.get("CLOUDFLARE_BUCKET_NAME")
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL")
+S3_PUBLIC_BASE_URL = os.environ.get("S3_PUBLIC_BASE_URL")
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "uploads")
 
 
@@ -30,9 +33,18 @@ class S3Service:
             aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
             region_name=AWS_REGION,
+            endpoint_url=S3_ENDPOINT_URL or None,
+            config=Config(
+                s3={"addressing_style": "path"} if S3_ENDPOINT_URL else {}
+            ),
         )
         self.bucket_name = S3_BUCKET_NAME
         self.cloudflare_bucket_name = CLOUDFLARE_BUCKET_NAME
+
+    def public_url(self, object_key: str) -> str:
+        if S3_PUBLIC_BASE_URL:
+            return f"{S3_PUBLIC_BASE_URL.rstrip('/')}/{object_key.lstrip('/')}"
+        return f"https://{self.cloudflare_bucket_name}/{object_key}"
 
     def download_file_to_bytes(self, object_key: str) -> bytes:
         """Download a file from S3 and return its content as bytes
@@ -77,7 +89,7 @@ class S3Service:
             Body=file_bytes,
             ContentType=content_type,
         )
-        file_url = f"https://{self.cloudflare_bucket_name}/{object_key}"
+        file_url = self.public_url(object_key)
         return object_key, file_url
 
     def upload_any_file(
@@ -111,7 +123,7 @@ class S3Service:
                 )
 
             # Generate the URL for the uploaded file
-            file_url = f"https://{self.cloudflare_bucket_name}/{object_key}"
+            file_url = self.public_url(object_key)
 
             return object_key, file_url
         except ClientError as e:

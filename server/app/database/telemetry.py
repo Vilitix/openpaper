@@ -14,21 +14,25 @@ logger = logging.getLogger(__name__)
 POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY", None)
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
-posthog = Posthog(
-    POSTHOG_API_KEY,
-    host="https://us.i.posthog.com",
-    enable_exception_autocapture=True,
-)
-
-posthog_sync = Posthog(
-    POSTHOG_API_KEY,
-    host="https://us.i.posthog.com",
-    sync_mode=True,
-    enable_exception_autocapture=True,
-)
-
-if DEBUG:
-    posthog.debug = True
+# Telemetry is optional. Constructing the client with an empty key only
+# produces per-process error logs, so skip it entirely when unconfigured.
+if POSTHOG_API_KEY:
+    posthog = Posthog(
+        POSTHOG_API_KEY,
+        host="https://us.i.posthog.com",
+        enable_exception_autocapture=True,
+    )
+    posthog_sync = Posthog(
+        POSTHOG_API_KEY,
+        host="https://us.i.posthog.com",
+        sync_mode=True,
+        enable_exception_autocapture=True,
+    )
+    if DEBUG:
+        posthog.debug = True
+else:
+    posthog = None
+    posthog_sync = None
 
 
 def _lookup_subscription(db: Optional[Session], user_id: str):

@@ -38,9 +38,7 @@ from app.api.projects.projects_data_table_api import projects_data_table_router
 from app.api.projects.projects_invitation_api import (
     router as projects_invitation_router,
 )
-from app.api.referral import referral_router
 from app.api.search_api import search_router
-from app.api.subscription import subscription_router
 from app.api.webhook_api import webhook_router
 from app.api.zotero_import_api import zotero_router
 from app.database.admin import setup_admin
@@ -56,11 +54,18 @@ app = FastAPI(
 )
 
 client_domain = os.getenv("CLIENT_DOMAIN", "http://localhost:3000")
+extra_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_EXTRA_ORIGINS", "").split(",")
+    if origin.strip()
+]
+cors_origin_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX", "").strip() or None
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[client_domain],
+    allow_origins=[client_domain, *extra_origins],
+    allow_origin_regex=cors_origin_regex,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -90,13 +95,9 @@ app.include_router(project_audio_router, prefix="/api/projects/audio")
 app.include_router(project_artifacts_router, prefix="/api/projects/artifacts")
 app.include_router(project_charts_router, prefix="/api/projects/charts")
 app.include_router(paper_tag_router, prefix="/api/paper/tag")
-app.include_router(
-    subscription_router, prefix="/api/subscription"
-)  # Subscription routes
 app.include_router(webhook_router, prefix="/api/webhooks")  # Webhook routes
 app.include_router(onboarding_router, prefix="/api/onboarding")
 app.include_router(discover_router, prefix="/api/discover")
-app.include_router(referral_router, prefix="/api/referral")
 app.include_router(zotero_router, prefix="/api/zotero")
 
 setup_admin(app)  # Setup admin interface

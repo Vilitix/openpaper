@@ -260,6 +260,25 @@ function PdfDocumentSync({
 	return null;
 }
 
+/**
+ * The PDF lives in object storage on a separate host/port from the app. When
+ * the app is opened through a different address (LAN, Tailscale, localhost),
+ * the stored URL still names the host used at upload time. Re-point the file
+ * host at the browser's current host so the same paper works from any device.
+ */
+function normalizePdfUrl(url: string): string {
+	if (!url || typeof window === "undefined") return url;
+	try {
+		const parsed = new URL(url);
+		if (parsed.hostname !== window.location.hostname) {
+			parsed.hostname = window.location.hostname;
+		}
+		return parsed.toString();
+	} catch {
+		return url;
+	}
+}
+
 export function PdfHighlighterViewer(props: PdfHighlighterViewerProps) {
 	const {
 		pdfUrl,
@@ -1767,7 +1786,7 @@ export function PdfHighlighterViewer(props: PdfHighlighterViewerProps) {
 			>
 				<PdfLoader
 					key={pdfLoaderKey}
-					document={effectivePdfUrl}
+					document={normalizePdfUrl(effectivePdfUrl)}
 					workerSrc="/pdf.worker.mjs"
 					beforeLoad={() => <EnigmaticLoadingExperience />}
 					onError={handlePdfError}

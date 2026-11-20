@@ -371,14 +371,14 @@ export function ArtifactsPanel() {
                     toast.warning("You've used all of your audio overviews for the week.", {
                         action: {
                             label: "Upgrade",
-                            onClick: () => router.push('/pricing'),
+                            onClick: () => router.push('/'),
                         }
                     });
                 } else if (newNearLimit) {
                     toast.info(`You have ${newUsage.audio_overviews_remaining} audio overviews remaining this week.`, {
                         action: {
                             label: "Upgrade",
-                            onClick: () => router.push('/pricing'),
+                            onClick: () => router.push('/'),
                         }
                     });
                 }
@@ -455,14 +455,14 @@ export function ArtifactsPanel() {
                     toast.warning("You've used all of your data tables for the week.", {
                         action: {
                             label: "Upgrade",
-                            onClick: () => router.push('/pricing'),
+                            onClick: () => router.push('/'),
                         }
                     });
                 } else if (newNearLimit) {
                     toast.info(`You have ${newUsage.data_tables_remaining} data tables remaining this week.`, {
                         action: {
                             label: "Upgrade",
-                            onClick: () => router.push('/pricing'),
+                            onClick: () => router.push('/'),
                         }
                     });
                 }
@@ -641,7 +641,7 @@ export function ArtifactsPanel() {
                     {atAudioLimit ? (
                         <div className="mt-4 text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/30 rounded-md">
                             <p className="text-sm text-yellow-800 dark:text-yellow-200">You&apos;ve used all your audio overviews for this week.</p>
-                            <Link href="/pricing" passHref>
+                            <Link href="/" passHref>
                                 <Button variant="link" className="p-0 h-auto text-sm">Upgrade your plan to create more.</Button>
                             </Link>
                         </div>

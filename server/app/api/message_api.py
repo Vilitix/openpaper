@@ -22,6 +22,7 @@ from app.database.database import get_db
 from app.database.models import Annotation, ConversableType
 from app.database.telemetry import track_event
 from app.llm.base import LLMProvider
+from app.llm.provider import default_provider
 from app.llm.citation_handler import CitationHandler
 from app.llm.operations import operations
 from app.llm.paper_operations import PaperNotFoundError
@@ -441,7 +442,7 @@ async def chat_message_multipaper(
                     conversation_id=request.conversation_id,
                     question=request.user_query,
                     current_user=current_user,
-                    llm_provider=LLMProvider.GEMINI,
+                    llm_provider=default_provider(),
                     user_references=request.user_references,
                     db=db,
                     project_id=request.project_id,

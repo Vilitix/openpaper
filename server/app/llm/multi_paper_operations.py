@@ -21,7 +21,7 @@ from app.llm.prompts import (
     GENERATE_MULTI_PAPER_NARRATIVE_SUMMARY,
     format_scope,
 )
-from app.llm.provider import LLMProvider, StreamChunk, SupplementaryContent, TextContent
+from app.llm.provider import LLMProvider, StreamChunk, SupplementaryContent, TextContent, default_provider
 from app.llm.utils import retry_llm_operation
 from app.schemas.artifact import CitationArtifactPayload
 from app.schemas.message import EvidenceCollection
@@ -362,7 +362,7 @@ class MultiPaperOperations(EvidenceOperations):
         async for result in self.gather_evidence(
             question=f"{summary_request}",
             current_user=current_user,
-            llm_provider=LLMProvider.GEMINI,
+            llm_provider=default_provider(),
             project_id=project_id,
             db=db,
         ):
@@ -406,7 +406,7 @@ class MultiPaperOperations(EvidenceOperations):
         response = self.generate_content(
             contents=message_content,
             model_type=ModelType.DEFAULT,
-            provider=LLMProvider.GEMINI,
+            provider=default_provider(),
             schema=AudioOverviewForLLM,
         )
 

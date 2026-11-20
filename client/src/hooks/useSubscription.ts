@@ -1,188 +1,98 @@
-import { useState, useEffect, useCallback } from 'react';
-import { fetchFromApi } from '@/lib/api';
+import { useCallback } from 'react';
 import { SubscriptionData, UseSubscriptionReturn } from '@/lib/schema';
 
+// Credits/subscriptions are disabled in this self-hosted fork. Returning an
+// unlimited subscription keeps the existing UI helpers working while removing
+// every limit, warning and upgrade gate.
+const UNLIMITED = 10 ** 9;
+
+export const UNLIMITED_SUBSCRIPTION: SubscriptionData = {
+    plan: 'researcher',
+    limits: {
+        paper_uploads: UNLIMITED,
+        knowledge_base_size: UNLIMITED,
+        chat_credits_weekly: UNLIMITED,
+        audio_overviews_weekly: UNLIMITED,
+        data_tables_weekly: UNLIMITED,
+        discover_searches_weekly: UNLIMITED,
+        projects: UNLIMITED,
+        project_papers: UNLIMITED,
+        model: [],
+    },
+    usage: {
+        paper_uploads: 0,
+        paper_uploads_remaining: UNLIMITED,
+        knowledge_base_size: 0,
+        knowledge_base_size_remaining: UNLIMITED,
+        chat_credits_used: 0,
+        chat_credits_remaining: UNLIMITED,
+        audio_overviews_used: 0,
+        audio_overviews_remaining: UNLIMITED,
+        projects: 0,
+        projects_remaining: UNLIMITED,
+        data_tables_used: 0,
+        data_tables_remaining: UNLIMITED,
+        discover_searches_used: 0,
+        discover_searches_remaining: UNLIMITED,
+    },
+};
+
 export const useSubscription = (): UseSubscriptionReturn => {
-    const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchSubscription = useCallback(async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await fetchFromApi("/api/subscription/usage");
-            setSubscription(response);
-        } catch (err) {
-            console.error("Error fetching subscription:", err);
-            setError(err instanceof Error ? err.message : "Failed to fetch subscription data");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchSubscription();
-    }, [fetchSubscription]);
-
-    return {
-        subscription,
-        loading,
-        error,
-        refetch: fetchSubscription
-    };
+    const refetch = useCallback(async () => { }, []);
+    return { subscription: UNLIMITED_SUBSCRIPTION, loading: false, error: null, refetch };
 };
 
-// Helper functions for common subscription checks
-export const getStorageUsagePercentage = (subscription: SubscriptionData | null): number => {
-    if (!subscription) return 0;
-    const total = subscription.limits.knowledge_base_size;
-    if (total === 0) return 0;
-    return (subscription.usage.knowledge_base_size / total) * 100;
-};
+const pct = (used: number, total: number): number => (total > 0 ? (used / total) * 100 : 0);
 
-export const isStorageNearLimit = (subscription: SubscriptionData | null, threshold: number = 75): boolean => {
-    return getStorageUsagePercentage(subscription) >= threshold;
-};
+export const getStorageUsagePercentage = (s: SubscriptionData | null) =>
+    s ? pct(s.usage.knowledge_base_size, s.limits.knowledge_base_size) : 0;
+export const isStorageNearLimit = (s: SubscriptionData | null, threshold = 75) => getStorageUsagePercentage(s) >= threshold;
+export const isStorageAtLimit = (s: SubscriptionData | null) => getStorageUsagePercentage(s) >= 100;
 
-export const isStorageAtLimit = (subscription: SubscriptionData | null): boolean => {
-    return getStorageUsagePercentage(subscription) >= 100;
-};
-
-export const getPaperUploadPercentage = (subscription: SubscriptionData | null): number => {
-    if (!subscription) return 0;
-    const total = subscription.limits.paper_uploads;
-    if (total === 0) return 0;
-    return (subscription.usage.paper_uploads / total) * 100;
-};
-
-export const isPaperUploadNearLimit = (subscription: SubscriptionData | null, threshold: number = 75): boolean => {
-    return getPaperUploadPercentage(subscription) >= threshold;
-};
-
-export const isPaperUploadAtLimit = (subscription: SubscriptionData | null): boolean => {
-    return getPaperUploadPercentage(subscription) >= 100;
-};
+export const getPaperUploadPercentage = (s: SubscriptionData | null) =>
+    s ? pct(s.usage.paper_uploads, s.limits.paper_uploads) : 0;
+export const isPaperUploadNearLimit = (s: SubscriptionData | null, threshold = 75) => getPaperUploadPercentage(s) >= threshold;
+export const isPaperUploadAtLimit = (s: SubscriptionData | null) => getPaperUploadPercentage(s) >= 100;
 
 export const formatFileSize = (sizeInKb: number): string => {
-    if (sizeInKb < 1024) {
-        return `${sizeInKb.toFixed(1)} KB`;
-    } else if (sizeInKb < 1024 * 1024) {
-        return `${(sizeInKb / 1024).toFixed(1)} MB`;
-    } else {
-        return `${(sizeInKb / (1024 * 1024)).toFixed(1)} GB`;
-    }
+    if (sizeInKb < 1024) return `${sizeInKb.toFixed(1)} KB`;
+    if (sizeInKb < 1024 * 1024) return `${(sizeInKb / 1024).toFixed(1)} MB`;
+    return `${(sizeInKb / (1024 * 1024)).toFixed(1)} GB`;
 };
 
-// Chat credit helper functions
-export const getChatCreditUsagePercentage = (subscription: SubscriptionData | null): number => {
-    if (!subscription) return 0;
-    const total = subscription.limits.chat_credits_weekly;
-    if (total === 0) return 0;
-    return (subscription.usage.chat_credits_used / total) * 100;
-};
+export const getChatCreditUsagePercentage = (s: SubscriptionData | null) =>
+    s ? pct(s.usage.chat_credits_used, s.limits.chat_credits_weekly) : 0;
+export const isChatCreditNearLimit = (s: SubscriptionData | null, threshold = 75) => getChatCreditUsagePercentage(s) >= threshold;
+export const isChatCreditAtLimit = (s: SubscriptionData | null) => getChatCreditUsagePercentage(s) >= 100;
 
-export const isChatCreditNearLimit = (subscription: SubscriptionData | null, threshold: number = 75): boolean => {
-    return getChatCreditUsagePercentage(subscription) >= threshold;
-};
+export const getAudioOverviewUsagePercentage = (s: SubscriptionData | null) =>
+    s ? pct(s.usage.audio_overviews_used, s.limits.audio_overviews_weekly) : 0;
+export const isAudioOverviewNearLimit = (s: SubscriptionData | null, threshold = 75) => getAudioOverviewUsagePercentage(s) >= threshold;
+export const isAudioOverviewAtLimit = (s: SubscriptionData | null) => getAudioOverviewUsagePercentage(s) >= 100;
 
-export const isChatCreditAtLimit = (subscription: SubscriptionData | null): boolean => {
-    return getChatCreditUsagePercentage(subscription) >= 100;
-};
+export const getProjectUsagePercentage = (s: SubscriptionData | null) =>
+    s ? pct(s.usage.projects, s.limits.projects) : 0;
+export const isProjectNearLimit = (s: SubscriptionData | null, threshold = 75) => getProjectUsagePercentage(s) >= threshold;
+export const isProjectAtLimit = (s: SubscriptionData | null) => getProjectUsagePercentage(s) >= 100;
 
-// Audio overview credit helper functions
-export const getAudioOverviewUsagePercentage = (subscription: SubscriptionData | null): number => {
-    if (!subscription) return 0;
-    const total = subscription.limits.audio_overviews_weekly;
-    if (total === 0) return 0;
-    return (subscription.usage.audio_overviews_used / total) * 100;
-};
+export const getProjectPaperHardLimit = (s: SubscriptionData | null): number | null =>
+    s?.limits.project_papers ?? null;
+export const getProjectPaperUsagePercentage = (s: SubscriptionData | null, paperCount: number) =>
+    s ? pct(paperCount, s.limits.project_papers) : 0;
+export const isProjectPaperNearLimit = (s: SubscriptionData | null, paperCount: number, threshold = 75) =>
+    getProjectPaperUsagePercentage(s, paperCount) >= threshold;
+export const isProjectPaperAtLimit = (s: SubscriptionData | null, paperCount: number) =>
+    getProjectPaperUsagePercentage(s, paperCount) >= 100;
 
-export const isAudioOverviewNearLimit = (subscription: SubscriptionData | null, threshold: number = 75): boolean => {
-    return getAudioOverviewUsagePercentage(subscription) >= threshold;
-};
+export const getDataTableUsagePercentage = (s: SubscriptionData | null) =>
+    s ? pct(s.usage.data_tables_used, s.limits.data_tables_weekly) : 0;
+export const isDataTableNearLimit = (s: SubscriptionData | null, threshold = 75) => getDataTableUsagePercentage(s) >= threshold;
+export const isDataTableAtLimit = (s: SubscriptionData | null) => getDataTableUsagePercentage(s) >= 100;
 
-export const isAudioOverviewAtLimit = (subscription: SubscriptionData | null): boolean => {
-    return getAudioOverviewUsagePercentage(subscription) >= 100;
-};
+export const getDiscoverSearchUsagePercentage = (s: SubscriptionData | null) =>
+    s ? pct(s.usage.discover_searches_used, s.limits.discover_searches_weekly) : 0;
+export const isDiscoverSearchNearLimit = (s: SubscriptionData | null, threshold = 75) => getDiscoverSearchUsagePercentage(s) >= threshold;
+export const isDiscoverSearchAtLimit = (s: SubscriptionData | null) =>
+    !!s && s.usage.discover_searches_remaining <= 0;
 
-// Project usage helper functions
-export const getProjectUsagePercentage = (subscription: SubscriptionData | null): number => {
-    if (!subscription) return 0;
-    const total = subscription.limits.projects;
-    if (total === 0) return 0;
-    return (subscription.usage.projects / total) * 100;
-};
-
-export const isProjectNearLimit = (subscription: SubscriptionData | null, threshold: number = 75): boolean => {
-    return getProjectUsagePercentage(subscription) >= threshold;
-};
-
-export const isProjectAtLimit = (subscription: SubscriptionData | null): boolean => {
-    return getProjectUsagePercentage(subscription) >= 100;
-};
-
-export const getProjectPaperHardLimit = (subscription: SubscriptionData | null): number | null => {
-    return subscription?.limits.project_papers ?? null;
-};
-
-export const getProjectPaperUsagePercentage = (subscription: SubscriptionData | null, paperCount: number): number => {
-    if (!subscription) return 0;
-    const total = subscription.limits.project_papers;
-    if (total === 0) return 0;
-    return (paperCount / total) * 100;
-};
-
-export const isProjectPaperNearLimit = (subscription: SubscriptionData | null, paperCount: number, threshold: number = 75): boolean => {
-    return getProjectPaperUsagePercentage(subscription, paperCount) >= threshold;
-};
-
-export const isProjectPaperAtLimit = (subscription: SubscriptionData | null, paperCount: number): boolean => {
-    return getProjectPaperUsagePercentage(subscription, paperCount) >= 100;
-};
-
-// Data table usage helper functions
-export const getDataTableUsagePercentage = (subscription: SubscriptionData | null): number => {
-    if (!subscription) return 0;
-    const total = subscription.limits.data_tables_weekly;
-    if (total === 0) return 0;
-    return (subscription.usage.data_tables_used / total) * 100;
-};
-
-export const isDataTableNearLimit = (subscription: SubscriptionData | null, threshold: number = 75): boolean => {
-    return getDataTableUsagePercentage(subscription) >= threshold;
-};
-
-export const isDataTableAtLimit = (subscription: SubscriptionData | null): boolean => {
-    return getDataTableUsagePercentage(subscription) >= 100;
-};
-
-// Discover search usage helper functions
-export const getDiscoverSearchUsagePercentage = (subscription: SubscriptionData | null): number => {
-    if (!subscription) return 0;
-    const total = subscription.limits.discover_searches_weekly;
-    if (total === 0) return 0;
-    return (subscription.usage.discover_searches_used / total) * 100;
-};
-
-export const isDiscoverSearchNearLimit = (subscription: SubscriptionData | null, threshold: number = 75): boolean => {
-    return getDiscoverSearchUsagePercentage(subscription) >= threshold;
-};
-
-export const isDiscoverSearchAtLimit = (subscription: SubscriptionData | null): boolean => {
-    if (!subscription) return false;
-    return subscription.usage.discover_searches_remaining <= 0;
-};
-
-// Calculate next Monday at 12 AM UTC for credit reset
-export const nextMonday = (() => {
-    const now = new Date();
-    const currentDayUTC = now.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const daysUntilMonday = currentDayUTC === 0 ? 1 : (8 - currentDayUTC) % 7; // Days until next Monday
-    const nextMondayUTC = new Date(now.getTime() + daysUntilMonday * 24 * 60 * 60 * 1000);
-
-    // Set to start of day in UTC (00:00:00 UTC)
-    nextMondayUTC.setUTCHours(0, 0, 0, 0);
-
-    return nextMondayUTC;
-})();
+export const nextMonday = new Date();

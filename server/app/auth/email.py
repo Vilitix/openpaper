@@ -27,6 +27,21 @@ class EmailAuthClient:
             bool: True if email was sent successfully, False otherwise
         """
         try:
+            if os.getenv("EMAIL_VERIFICATION_CONSOLE", "").strip().lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            } and not os.getenv("RESEND_API_KEY"):
+                # Self-hosted fallback: no mail provider configured, so put the
+                # code where the operator can read it instead of failing login.
+                logger.warning(
+                    "Email verification code for %s is %s (RESEND_API_KEY is not set)",
+                    email,
+                    verification_code,
+                )
+                return True
+
             subject = "Your Open Paper verification code"
 
             html_template = load_email_template("verification_code.html")

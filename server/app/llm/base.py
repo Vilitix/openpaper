@@ -17,6 +17,7 @@ from app.llm.provider import (
     OpenAIProvider,
     StreamChunk,
     ToolCallResult,
+    default_provider as default_provider_from_env,
     strict_json_schema,
 )
 from app.llm.utils import is_provider_outage, retry_llm_operation
@@ -39,16 +40,38 @@ def _fallback_provider_from_env() -> Optional[LLMProvider]:
     return LLMProvider(value.lower()) if value else None
 
 
+def _enabled_providers_from_env() -> List[LLMProvider]:
+    """Providers to initialize at startup.
+
+    Upstream initializes every provider, which requires a key for each. A
+    single-key self-hosted deployment sets LLM_ENABLED_PROVIDERS=openai so it
+    does not need Gemini or Anthropic credentials just to boot.
+    """
+    raw = os.getenv("LLM_ENABLED_PROVIDERS", "").strip()
+    if not raw:
+        return list(LLMProvider)
+
+    providers: List[LLMProvider] = []
+    for item in raw.split(","):
+        name = item.strip().lower()
+        if not name:
+            continue
+        try:
+            providers.append(LLMProvider(name))
+        except ValueError:
+            logger.warning("Ignoring unknown LLM_ENABLED_PROVIDERS entry %r", name)
+    return providers or list(LLMProvider)
+
+
 class BaseLLMClient:
     """Unified LLM client that supports multiple providers"""
 
-    def __init__(self, default_provider: LLMProvider = LLMProvider.GEMINI):
-        self.default_provider = default_provider
+    def __init__(self, default_provider: Optional[LLMProvider] = None):
+        self.default_provider = default_provider or default_provider_from_env()
         self.fallback_provider = _fallback_provider_from_env()
         self._providers: Dict[LLMProvider, BaseLLMProvider] = {}
 
-        # Initialize all providers to ensure they are ready for use
-        for provider in LLMProvider:
+        for provider in _enabled_providers_from_env():
             self._initialize_provider(provider)
 
     def get_chat_model_options(

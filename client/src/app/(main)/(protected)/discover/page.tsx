@@ -66,7 +66,7 @@ function DiscoverPageContent() {
                     description: "You've used all your weekly discover searches. Limits reset every Monday.",
                     action: {
                         label: "Upgrade",
-                        onClick: () => window.location.href = "/pricing"
+                        onClick: () => window.location.href = "/"
                     },
                 })
                 toastShown = true
@@ -76,7 +76,7 @@ function DiscoverPageContent() {
                     description: `You have ${remaining} search${remaining === 1 ? "" : "es"} remaining this week.`,
                     action: {
                         label: "Upgrade",
-                        onClick: () => window.location.href = "/pricing"
+                        onClick: () => window.location.href = "/"
                     },
                 })
                 toastShown = true
@@ -179,7 +179,7 @@ function DiscoverPageContent() {
                 description: "You've used all your weekly discover searches. Limits reset every Monday.",
                 action: {
                     label: "Upgrade",
-                    onClick: () => window.location.href = "/pricing"
+                    onClick: () => window.location.href = "/"
                 },
             })
             return

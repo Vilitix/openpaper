@@ -25,7 +25,6 @@ from app.database.crud.paper_crud import paper_crud
 from app.database.crud.projects.project_role_invitation_crud import (
     project_role_invitation_crud,
 )
-from app.database.crud.subscription_crud import subscription_crud
 from app.database.crud.user_crud import user as user_crud
 from app.database.crud.zotero_crud import zotero_crud
 from app.database.crud.zotero_import_crud import zotero_import_crud
@@ -90,6 +89,70 @@ async def get_me(
     return AuthResponse(success=True, message="User found", user=current_user)
 
 
+LOCAL_AUTH_SECRET = os.getenv("LOCAL_AUTH_SECRET")
+LOCAL_AUTH_EMAIL = os.getenv("LOCAL_AUTH_EMAIL", "arthur@example.com")
+LOCAL_AUTH_NAME = os.getenv("LOCAL_AUTH_NAME", "Arthur")
+
+
+@auth_router.get("/local")
+async def local_login(
+    secret: str = Query(...),
+    request: Request = None,
+    db: Session = Depends(get_db),
+):
+    """Secret-guarded login for self-hosted instances without a mail provider.
+
+    Disabled unless LOCAL_AUTH_SECRET is set. The secret is a bearer value, so
+    treat the link like a password.
+    """
+    if not LOCAL_AUTH_SECRET or not secrets.compare_digest(secret, LOCAL_AUTH_SECRET):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    email = normalize_email(LOCAL_AUTH_EMAIL)
+    if not email:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    db_user = user_crud.get_by_email_and_provider(db, email=email, provider="email")
+    if not db_user:
+        db_user = user_crud.create_email_user(db, email=email, name=LOCAL_AUTH_NAME)
+        db_user = user_crud.verify_email(db, user=db_user)
+    elif not db_user.is_email_verified:
+        db_user = user_crud.verify_email(db, user=db_user)
+    if not db_user.is_active:
+        db_user.is_active = True
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+
+    session = user_crud.create_session(
+        db=db,
+        user_id=db_user.id,
+        user_agent=request.headers.get("user-agent") if request else None,
+        ip_address=request.client.host if request and request.client else None,
+    )
+
+    # Keep the browser on the hostname it used to reach the API. A link opened
+    # via the LAN/Tailscale address must not redirect to localhost on the
+    # viewer's own machine.
+    redirect_base = client_domain
+    if request is not None:
+        request_host = (request.headers.get("host") or "").split(":")[0]
+        if request_host:
+            from urllib.parse import urlparse
+
+            parsed = urlparse(client_domain)
+            client_port = parsed.port or 3100
+            redirect_base = f"{request.url.scheme}://{request_host}:{client_port}"
+
+    response = RedirectResponse(
+        url=f"{redirect_base}/auth/callback?success=true", status_code=302
+    )
+    set_session_cookie(
+        response, token=str(session.token), expires_at=session.expires_at
+    )
+    return response
+
+
 @auth_router.patch("/profile", response_model=AuthResponse)
 async def update_profile(
     request: ProfileUpdateRequest,
@@ -114,7 +177,6 @@ async def update_profile(
     user_crud.update(db=db, db_obj=db_user, obj_in=UserUpdate(name=name))
     db.refresh(db_user)
 
-    is_user_active = subscription_crud.is_user_active(db, db_user)
     updated_current_user = CurrentUser(
         id=uuid.UUID(str(db_user.id)),
         email=str(db_user.email),
@@ -122,7 +184,7 @@ async def update_profile(
         is_admin=bool(db_user.is_admin),
         picture=str(db_user.picture) if db_user.picture else None,
         is_email_verified=bool(db_user.is_email_verified),
-        is_active=is_user_active,
+        is_active=True,
         is_blocked=bool(db_user.is_blocked),
     )
 

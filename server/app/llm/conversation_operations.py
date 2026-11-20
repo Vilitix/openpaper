@@ -17,7 +17,7 @@ from app.llm.prompts import (
     RENAME_CONVERSATION_SYSTEM_PROMPT,
     RENAME_CONVERSATION_USER_MESSAGE,
 )
-from app.llm.provider import LLMProvider, TextContent
+from app.llm.provider import LLMProvider, TextContent, default_provider
 from app.llm.tools.file_tools import (
     read_abstract,
     read_abstract_function,
@@ -253,7 +253,7 @@ class DataTableOperations(BaseLLMClient):
                 model_type=ModelType.FAST,
                 function_declarations=function_declarations,
                 tool_call_results=tool_call_results or None,
-                provider=LLMProvider.GEMINI,
+                provider=default_provider(),
             )
             if not response or not response.tool_calls:
                 investigation_report = (response.text or "").strip() if response else ""
@@ -473,7 +473,7 @@ class DataTableOperations(BaseLLMClient):
                 model_type=ModelType.FAST,
                 function_declarations=function_declarations,
                 tool_call_results=tool_call_results or None,
-                provider=LLMProvider.GEMINI,
+                provider=default_provider(),
             )
 
             if not response or not response.tool_calls:
@@ -571,7 +571,7 @@ class DataTableOperations(BaseLLMClient):
             system_prompt=PROPOSE_DATA_TABLE_SCHEMA_FINAL_SYSTEM_PROMPT,
             model_type=ModelType.FAST,
             schema=DataTableSchemaProposal.model_json_schema(),
-            provider=LLMProvider.GEMINI,
+            provider=default_provider(),
         )
 
         if response and response.text:

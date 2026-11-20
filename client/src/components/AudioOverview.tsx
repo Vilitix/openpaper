@@ -567,7 +567,7 @@ export function AudioOverviewPanel({ paper_id, paper_title, setExplicitSearchTer
                                 </div>
                                 <p className="mt-1">You&apos;ve used all your monthly audio overviews. Credits reset every Monday at 12 AM UTC.</p>
                                 <Link
-                                    href="/pricing"
+                                    href="/"
                                     className="text-blue-500 hover:text-blue-700 font-medium"
                                 >
                                     Upgrade for more audio overviews →
@@ -629,7 +629,7 @@ export function AudioOverviewPanel({ paper_id, paper_title, setExplicitSearchTer
                                     </HoverCardContent>
                                 </HoverCard>
                                 <Link
-                                    href="/pricing"
+                                    href="/"
                                     className="text-blue-500 hover:text-blue-700 ml-1"
                                 >
                                     Upgrade

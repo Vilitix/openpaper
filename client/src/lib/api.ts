@@ -1,4 +1,15 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+const apiPort = process.env.NEXT_PUBLIC_API_PORT || '8100';
+
+// Prefer an explicit build-time URL. Otherwise talk to the same host the page
+// was loaded from, on the API port: this keeps localhost, LAN, and Tailscale
+// access working without rebuilding the image for each hostname.
+const API_BASE_URL =
+    configuredApiUrl && configuredApiUrl.length > 0
+        ? configuredApiUrl
+        : typeof window !== 'undefined'
+          ? `${window.location.protocol}//${window.location.hostname}:${apiPort}`
+          : `http://localhost:${apiPort}`;
 
 export async function fetchFromApi(endpoint: string, options: RequestInit = {}) {
     const headers: HeadersInit = {};

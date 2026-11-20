@@ -1,8 +1,8 @@
 import logging
+import os
 import uuid
 from typing import Annotated, Optional
 
-from app.database.crud.subscription_crud import subscription_crud
 from app.database.crud.user_crud import user as user_crud
 from app.database.database import get_db
 from app.schemas.user import CurrentUser
@@ -18,6 +18,53 @@ SESSION_COOKIE_NAME = "session_token"
 # Setup header auth
 api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 
+AUTO_AUTH = os.getenv("AUTO_AUTH", "false").strip().lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+AUTO_AUTH_EMAIL = os.getenv("AUTO_AUTH_EMAIL", "arthur@example.com")
+AUTO_AUTH_NAME = os.getenv("AUTO_AUTH_NAME", "Arthur")
+
+
+def _auto_auth_user(db: Session) -> CurrentUser:
+    """Return (and create if needed) the single local user for AUTO_AUTH."""
+    db_user = user_crud.get_by_email_and_provider(
+        db, email=AUTO_AUTH_EMAIL, provider="email"
+    )
+    if not db_user:
+        db_user = user_crud.create_email_user(
+            db, email=AUTO_AUTH_EMAIL, name=AUTO_AUTH_NAME
+        )
+        db_user = user_crud.verify_email(db, user=db_user)
+
+    changed = False
+    if not db_user.is_active:
+        db_user.is_active = True
+        changed = True
+    if db_user.is_blocked:
+        db_user.is_blocked = False
+        changed = True
+    if not db_user.is_email_verified:
+        db_user.is_email_verified = True
+        changed = True
+    if changed:
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+
+    return CurrentUser(
+        id=uuid.UUID(str(db_user.id)),
+        email=str(db_user.email),
+        name=db_user.name,  # type: ignore
+        is_admin=bool(db_user.is_admin),
+        picture=db_user.picture,  # type: ignore
+        is_email_verified=True,
+        is_active=True,
+        is_blocked=False,
+    )
+
 
 def get_current_user(
     request: Request,
@@ -29,6 +76,9 @@ def get_current_user(
 
     This is a FastAPI dependency that can be used in route functions.
     """
+    if AUTO_AUTH:
+        return _auto_auth_user(db)
+
     token = None
 
     # First try from Authorization header
@@ -58,8 +108,6 @@ def get_current_user(
 
     id_as_uuid = uuid.UUID(str(db_user.id))
 
-    is_user_active = subscription_crud.is_user_active(db, db_user)
-
     # Return CurrentUser model
     return CurrentUser(
         id=id_as_uuid,
@@ -68,7 +116,7 @@ def get_current_user(
         is_admin=bool(db_user.is_admin),
         picture=db_user.picture,  # type: ignore
         is_email_verified=bool(db_user.is_email_verified),
-        is_active=is_user_active,
+        is_active=True,
         is_blocked=bool(db_user.is_blocked),
     )
 

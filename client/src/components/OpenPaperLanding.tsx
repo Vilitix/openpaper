@@ -18,7 +18,6 @@ import {
     MessageSquareText,
     Upload,
     Play,
-    HandCoins,
     GithubIcon,
     Menu,
     Quote,
@@ -89,9 +88,6 @@ export default function OpenPaperLanding() {
                     <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors text-muted-foreground">
                         About
                     </Link>
-                    <Link href="/pricing" className="text-sm font-medium hover:text-primary transition-colors text-muted-foreground">
-                        Pricing
-                    </Link>
                     <Link href="/blog" className="text-sm font-medium hover:text-primary transition-colors text-muted-foreground">
                         Blog
                     </Link>
@@ -143,13 +139,6 @@ export default function OpenPaperLanding() {
                             >
                                 <Link href="/login" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
                             </Button>
-                            <Link
-                                href="/pricing"
-                                className="text-lg font-medium hover:text-primary transition-colors text-muted-foreground"
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                Pricing
-                            </Link>
                         </nav>
                     </SheetContent>
                 </Sheet>
@@ -673,12 +662,6 @@ export default function OpenPaperLanding() {
                                     <Link href="/login">
                                         <Play className="h-4 w-4 mr-2" />
                                         Get Started
-                                    </Link>
-                                </Button>
-                                <Button variant="outline" size="lg" className="w-full sm:w-auto" asChild>
-                                    <Link href="/pricing">
-                                        <HandCoins className="h-4 w-4 mr-2" />
-                                        Pricing
                                     </Link>
                                 </Button>
                             </div>

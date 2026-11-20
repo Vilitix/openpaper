@@ -12,13 +12,12 @@ from app.helpers.openalex_search import (
     search_openalex,
 )
 from app.llm.base import BaseLLMClient, ModelType
-from app.llm.provider import LLMProvider
 from app.schemas.discover import DISCOVER_SOURCES
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-llm_client = BaseLLMClient(default_provider=LLMProvider.GEMINI)
+llm_client = BaseLLMClient()
 
 DECOMPOSE_PROMPT = """You are a research assistant helping find academic papers. Given a research question, generate 2-5 search subqueries.
 

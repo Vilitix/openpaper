@@ -129,7 +129,7 @@ export default function Home() {
 					description: "You've used your available storage. Upgrade for more space, or free up room by removing papers.",
 					action: {
 						label: "Upgrade",
-						onClick: () => window.location.href = "/pricing"
+						onClick: () => window.location.href = "/"
 					},
 				});
 				toastShown = true;
@@ -138,7 +138,7 @@ export default function Home() {
 					description: "You've used your available paper uploads. Upgrade for more, or remove existing papers.",
 					action: {
 						label: "Upgrade",
-						onClick: () => window.location.href = "/pricing"
+						onClick: () => window.location.href = "/"
 					},
 				});
 				toastShown = true;
@@ -147,7 +147,7 @@ export default function Home() {
 					description: "You're getting close to your storage limit.",
 					action: {
 						label: "Upgrade",
-						onClick: () => window.location.href = "/pricing"
+						onClick: () => window.location.href = "/"
 					},
 				});
 				toastShown = true;
@@ -156,7 +156,7 @@ export default function Home() {
 					description: "You're getting close to your paper upload limit.",
 					action: {
 						label: "Upgrade",
-						onClick: () => window.location.href = "/pricing"
+						onClick: () => window.location.href = "/"
 					},
 				});
 				toastShown = true;
@@ -520,7 +520,7 @@ export default function Home() {
 						<div className="flex justify-end mt-4">
 							{showPricingOnError && (
 								<Button variant="default" asChild className="mr-2 bg-blue-500 hover:bg-blue-200 dark:bg-blue-600 dark:hover:bg-blue-700 text-white">
-									<Link href="/pricing">Upgrade</Link>
+									<Link href="/">Upgrade</Link>
 								</Button>
 							)}
 						</div>

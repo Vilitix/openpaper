@@ -63,6 +63,21 @@ class LLMProvider(Enum):
     ANTHROPIC = "anthropic"
 
 
+def default_provider() -> LLMProvider:
+    """The provider every operation uses unless one is passed explicitly.
+
+    Defaults to Gemini to match upstream, but a self-hosted deployment that only
+    has an OpenAI-compatible key (for example OpenCode Go) sets
+    LLM_DEFAULT_PROVIDER=openai.
+    """
+    raw = os.getenv("LLM_DEFAULT_PROVIDER", LLMProvider.GEMINI.value).strip().lower()
+    try:
+        return LLMProvider(raw)
+    except ValueError:
+        logger.warning("Unknown LLM_DEFAULT_PROVIDER=%r; falling back to gemini", raw)
+        return LLMProvider.GEMINI
+
+
 class LLMResponse:
     """Standardized response format across all LLM providers"""
 
@@ -702,7 +717,7 @@ class OpenAIProvider(BaseLLMProvider):
         base_url: Optional[str] = None,
         default_model: Optional[str] = None,
         fast_model: Optional[str] = None,
-        supports_pdf_input: bool = True,
+        supports_pdf_input: Optional[bool] = None,
     ):
 
         # Allow explicit api_key/base_url overrides while keeping env-based defaults.
@@ -713,16 +728,45 @@ class OpenAIProvider(BaseLLMProvider):
 
         # For standard OpenAI, base_url should be None. For OpenAI-compatible
         # providers, pass a custom base_url when constructing this provider.
-        self._client = LangfuseOpenAI(api_key=self.api_key, base_url=base_url)
+        base_url = base_url or os.getenv("OPENAI_BASE_URL") or None
+
+        # Optional static headers, e.g. OpenCode Go's routing header.
+        headers: Dict[str, str] = {}
+        raw_headers = os.getenv("OPENAI_EXTRA_HEADERS")
+        if raw_headers:
+            try:
+                parsed_headers = json.loads(raw_headers)
+                if isinstance(parsed_headers, dict):
+                    headers = {str(k): str(v) for k, v in parsed_headers.items()}
+            except (TypeError, ValueError):
+                logger.warning("OPENAI_EXTRA_HEADERS is not valid JSON; ignoring it")
+
+        self._client = LangfuseOpenAI(
+            api_key=self.api_key,
+            base_url=base_url,
+            default_headers=headers or None,
+        )
         # Streaming runs on the async client so chunk reads don't block the
         # event loop; everything else still uses the sync client.
         self._async_client = LangfuseAsyncOpenAI(
-            api_key=self.api_key, base_url=base_url
+            api_key=self.api_key,
+            base_url=base_url,
+            default_headers=headers or None,
         )
-        self._default_model = default_model or "gpt-6.1-terra"
-        self._fast_model = fast_model or "gpt-6-luna"
+        self._default_model = (
+            default_model
+            or os.getenv("OPENAI_DEFAULT_MODEL")
+            or "gpt-6.1-terra"
+        )
+        self._fast_model = (
+            fast_model or os.getenv("OPENAI_FAST_MODEL") or "gpt-6-luna"
+        )
         # Some OpenAI-compatible endpoints reject `file` content blocks.
         # When False, FileContent for PDFs uses text_fallback inline.
+        if supports_pdf_input is None:
+            supports_pdf_input = os.getenv(
+                "OPENAI_SUPPORTS_PDF_INPUT", "true"
+            ).strip().lower() in {"1", "true", "yes", "on"}
         self.supports_pdf_input = supports_pdf_input
 
     @property
@@ -783,6 +827,15 @@ class OpenAIProvider(BaseLLMProvider):
                 "Thinking requested, but reasoning models not yet enabled for OpenAI provider"
             )
 
+        # Match the OpenWebUI model profile where it can be expressed on the
+        # chat-completions request.
+        reasoning_effort = os.getenv("OPENAI_REASONING_EFFORT")
+        if reasoning_effort:
+            kwargs.setdefault("reasoning_effort", reasoning_effort)
+        max_tokens = os.getenv("OPENAI_MAX_TOKENS")
+        if max_tokens:
+            kwargs.setdefault("max_tokens", int(max_tokens))
+
         response = self.client.chat.completions.create(
             model=model, messages=all_messages, **kwargs
         )
@@ -827,6 +880,13 @@ class OpenAIProvider(BaseLLMProvider):
         # no text is a failure, and returning it quietly hands the user a blank
         # message with nothing raised anywhere.
         state = {"saw_text": False}
+
+        reasoning_effort = os.getenv("OPENAI_REASONING_EFFORT")
+        if reasoning_effort:
+            kwargs.setdefault("reasoning_effort", reasoning_effort)
+        max_tokens = os.getenv("OPENAI_MAX_TOKENS")
+        if max_tokens:
+            kwargs.setdefault("max_tokens", int(max_tokens))
 
         async def open_stream():
             state["saw_text"] = False

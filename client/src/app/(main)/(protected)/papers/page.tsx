@@ -239,7 +239,7 @@ function PapersPageContent() {
                     </div>
                     <div className="flex items-center gap-x-2">
                         <Button asChild size="sm" variant="outline">
-                            <Link href="/pricing">View plans</Link>
+                            <Link href="/">View plans</Link>
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => setShowAlert(false)} className="self-start">
                             Dismiss
@@ -381,7 +381,7 @@ function PapersPageContent() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <Link href="/pricing">
+                        <Link href="/">
                             <AlertDialogAction>Upgrade</AlertDialogAction>
                         </Link>
                     </AlertDialogFooter>
@@ -412,7 +412,7 @@ function PapersPageContent() {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <Link href="/pricing">
+                        <Link href="/">
                             <AlertDialogAction>Upgrade</AlertDialogAction>
                         </Link>
                     </AlertDialogFooter>

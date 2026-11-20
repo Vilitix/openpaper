@@ -85,9 +85,24 @@ def get_user_subscription_plan(db: Session, user: CurrentUser) -> SubscriptionPl
     return SubscriptionPlan.BASIC
 
 
+# Self-hosted single-user mode: the credit/subscription system is disabled.
+# Keep the functions (many call sites use their signatures) but make every plan
+# unlimited. A finite huge value keeps int() conversions in Zotero import sane.
+UNLIMITED_LIMITS = {
+    PAPER_UPLOAD_KEY: 10**9,
+    KB_SIZE_KEY: 10**12,
+    CHAT_CREDITS_KEY: 10**9,
+    AUDIO_OVERVIEWS_KEY: 10**9,
+    PROJECTS_KEY: 10**9,
+    DATA_TABLES_KEY: 10**9,
+    DISCOVER_SEARCHES_KEY: 10**9,
+    PROJECT_PAPERS_KEY: 10**9,
+}
+
+
 def get_plan_limits(plan: SubscriptionPlan) -> Dict:
-    """Get the limits for a specific subscription plan."""
-    return SUBSCRIPTION_LIMITS.get(plan, SUBSCRIPTION_LIMITS[SubscriptionPlan.BASIC])
+    """Return unlimited limits; subscriptions are disabled in this deployment."""
+    return UNLIMITED_LIMITS
 
 
 def get_remaining_paper_upload_slots(db: Session, user: CurrentUser) -> int:
@@ -426,8 +441,8 @@ def can_user_run_discover_search(
 
 
 def can_user_auto_sync_zotero(db: Session, user: CurrentUser) -> bool:
-    """Return True if the user's plan allows automatic Zotero sync (Researcher only)."""
-    return get_user_subscription_plan(db, user) == SubscriptionPlan.RESEARCHER
+    """Automatic Zotero sync is always allowed; subscriptions are disabled."""
+    return True
 
 
 def get_user_chat_credits_used_this_week(db: Session, user: CurrentUser) -> int:

@@ -43,11 +43,8 @@ logger = logging.getLogger(__name__)
 # and fail them one by one, minutes apart, at the last step. Better to refuse
 # to start.
 E2B_API_KEY = os.getenv("E2B_DEV_API_KEY") or os.getenv("E2B_API_KEY")
-if not E2B_API_KEY:
-    raise ValueError(
-        "E2B_DEV_API_KEY or E2B_API_KEY environment variable is not set. "
-        "Model-authored unit conversions only run in the sandbox."
-    )
+# No key is fine at import time: single-key self-hosted deployments boot
+# without the sandbox and only lose the features that require it.
 
 CONVERSIONS_PATH = "/home/user/conversions.json"
 CONVERTED_PATH = "/home/user/converted.json"
@@ -160,6 +157,11 @@ def run_unit_conversions(
         return {}, {}
 
     payload = [request._asdict() for request in requests]
+    if not E2B_API_KEY:
+        raise ConversionError(
+            "E2B_DEV_API_KEY or E2B_API_KEY is not set; unit conversions need "
+            "the sandbox"
+        )
     sandbox = Sandbox.create(api_key=E2B_API_KEY, timeout=120)
     try:
         sandbox.files.write(CONVERSIONS_PATH, json.dumps(payload))

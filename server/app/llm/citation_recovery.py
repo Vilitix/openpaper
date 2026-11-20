@@ -22,7 +22,7 @@ from app.helpers.citations import CitationFields, bibliographic_gaps, fields_fro
 from app.helpers.paper_search import extract_doi_from_url
 from app.helpers.parser import parse_publication_date
 from app.llm.base import BaseLLMClient, ModelType
-from app.llm.provider import LLMProvider
+from app.llm.provider import LLMProvider, default_provider
 from app.llm.tools.web_tools import (
     web_fetch,
     web_fetch_function,
@@ -201,7 +201,7 @@ class MetadataRecoveryAgent(BaseLLMClient):
                     function_declarations=function_declarations,
                     tool_call_results=tool_call_results or None,
                     model_type=ModelType.DEFAULT,
-                    provider=LLMProvider.GEMINI,
+                    provider=default_provider(),
                     enable_thinking=True,
                 )
             except Exception:
@@ -318,7 +318,7 @@ class MetadataRecoveryAgent(BaseLLMClient):
                 contents=[TextContent(text=prompt)],
                 schema=CITATION_EXTRACTION_SCHEMA,
                 model_type=ModelType.DEFAULT,
-                provider=LLMProvider.GEMINI,
+                provider=default_provider(),
                 enable_thinking=False,
             )
             findings = json.loads(resp.text)

@@ -145,7 +145,7 @@ export function PaperProjects({ id, view = 'full' }: PaperProjectsProps) {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <Link href="/pricing">
+                                <Link href="/">
                                     <AlertDialogAction>Upgrade</AlertDialogAction>
                                 </Link>
                             </AlertDialogFooter>

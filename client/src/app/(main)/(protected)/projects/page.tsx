@@ -92,7 +92,7 @@ function ProjectsPage() {
 					description: "You've used your available project slots. Upgrade for more, or archive existing projects.",
 					action: {
 						label: "Upgrade",
-						onClick: () => router.push("/pricing"),
+						onClick: () => router.push("/"),
 					},
 				});
 				toastShown = true;
@@ -101,7 +101,7 @@ function ProjectsPage() {
 					description: "You're getting close to your project limit.",
 					action: {
 						label: "Upgrade",
-						onClick: () => router.push("/pricing"),
+						onClick: () => router.push("/"),
 					},
 				});
 				toastShown = true;
@@ -193,7 +193,7 @@ function ProjectsPage() {
 						</div>
 						<div className="flex items-center gap-x-2">
 							<Button asChild size="sm" variant="outline">
-								<Link href="/pricing">View plans</Link>
+								<Link href="/">View plans</Link>
 							</Button>
 							<Button variant="ghost" size="sm" onClick={() => setShowUsageAlert(false)} className="self-start">
 								Dismiss

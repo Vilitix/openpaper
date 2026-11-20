@@ -310,12 +310,8 @@ export default function DiscoverInput({
 
                     {/* Search button or Upgrade button when at limit */}
                     {atSearchLimit ? (
-                        <Button
-                            asChild
-                            size="sm"
-                            className="gap-2"
-                        >
-                            <a href="/pricing">Upgrade</a>
+                        <Button size="sm" className="gap-2">
+                            Upgrade
                         </Button>
                     ) : (
                         <Button

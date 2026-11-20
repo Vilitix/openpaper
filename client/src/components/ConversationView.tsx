@@ -592,7 +592,7 @@ export const ConversationView = ({
 						{chatCreditLimitReached && (
 							<div className="text-center text-sm text-secondary-foreground mt-2">
 								Nice! You have used your chat credits for the week.{" "}
-								<Link href="/pricing" className="text-blue-500 hover:underline">
+								<Link href="/" className="text-blue-500 hover:underline">
 									Upgrade your plan to use more.
 								</Link>
 							</div>

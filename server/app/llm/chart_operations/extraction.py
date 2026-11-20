@@ -55,7 +55,7 @@ from app.llm.chart_operations.text import (
 )
 from app.llm.conversation_operations import DataTableOperations
 from app.llm.prompts import CHART_EXTRACTION_SYSTEM_PROMPT
-from app.llm.provider import FileContent, LLMProvider, TextContent
+from app.llm.provider import FileContent, LLMProvider, TextContent, default_provider
 from app.schemas.chart import (
     ChartArtifactPayload,
     ChartCoverage,
@@ -146,7 +146,7 @@ def _paper_pdf(
     current_user: CurrentUser,
     db: Session,
     project_id: Optional[str],
-) -> Optional[tuple[bytes, str]]:
+) -> Optional[tuple[bytes, str, Optional[str]]]:
     """The stored PDF for a paper, or None when it has no indexed file.
 
     A paper in a project with no object key is an indexing failure, not a
@@ -168,7 +168,11 @@ def _paper_pdf(
     data = s3_service.download_bytes(str(paper.s3_object_key))
     if not data:
         return None
-    return data, f"{str(paper.title) if paper.title else 'paper'}.pdf"
+    return (
+        data,
+        f"{str(paper.title) if paper.title else 'paper'}.pdf",
+        str(paper.raw_content) if paper.raw_content else None,
+    )
 
 
 def _read_quantity(quoted: ChartQuotedValue) -> ChartValue:
@@ -445,7 +449,7 @@ class ChartExtracting(DataTableOperations):
         # A shortlisted paper with no stored PDF is an indexing failure. Falling
         # back to its extracted text is what put wrong numbers on charts, so it
         # is reported instead.
-        documents: dict[str, tuple[bytes, str]] = {}
+        documents: dict[str, tuple[bytes, str, Optional[str]]] = {}
         unindexed: list[str] = []
         for paper_id in shortlisted:
             try:
@@ -466,11 +470,14 @@ class ChartExtracting(DataTableOperations):
         papers_attempted: set[str] = set()
 
         def extract(paper_id: str) -> list[ChartExtractionRecord]:
-            data, filename = documents[paper_id]
+            data, filename, raw_text = documents[paper_id]
             response = self.generate_content(
                 contents=[
                     FileContent(
-                        data=data, mime_type="application/pdf", filename=filename
+                        data=data,
+                        mime_type="application/pdf",
+                        filename=filename,
+                        text_fallback=raw_text,
                     ),
                     TextContent(
                         text=(
@@ -490,7 +497,7 @@ class ChartExtracting(DataTableOperations):
                 ),
                 model_type=ModelType.FAST,
                 schema=extraction_schema,
-                provider=LLMProvider.GEMINI,
+                provider=default_provider(),
             )
             if not response or not response.text:
                 return []

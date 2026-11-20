@@ -29,7 +29,7 @@ from app.llm.prompts import (
     CHART_SCOPE_SYSTEM_PROMPT,
     CHART_VERIFICATION_SYSTEM_PROMPT,
 )
-from app.llm.provider import LLMProvider, TextContent
+from app.llm.provider import LLMProvider, TextContent, default_provider
 from app.llm.tools.file_tools import read_abstract, read_file, search_all_files
 from app.schemas.chart import (
     ChartField,
@@ -338,7 +338,7 @@ class ChartPlanning(DataTableOperations):
             system_prompt=CHART_SCOPE_SYSTEM_PROMPT,
             model_type=ModelType.FAST,
             schema=ChartScope.model_json_schema(),
-            provider=LLMProvider.GEMINI,
+            provider=default_provider(),
         )
         if not response or not response.text:
             return ChartScope(covers="all_papers")
@@ -416,7 +416,7 @@ class ChartPlanning(DataTableOperations):
             system_prompt=CHART_PLAN_SYSTEM_PROMPT,
             model_type=ModelType.FAST,
             schema=ChartPlanCandidates.model_json_schema(),
-            provider=LLMProvider.GEMINI,
+            provider=default_provider(),
         )
         if not response or not response.text:
             return ChartProposal()

@@ -131,7 +131,7 @@ function ProjectConversationPageContent() {
             toast.error("Nice! You've used your chat credits for the week. Upgrade your plan to continue chatting.", {
                 action: {
                     label: "Upgrade",
-                    onClick: () => window.location.href = "/pricing",
+                    onClick: () => window.location.href = "/",
                 },
             });
             sessionStorage.setItem(CHAT_CREDIT_TOAST_KEY, "true");

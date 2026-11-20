@@ -298,7 +298,7 @@ async def process_pdf_file(
                     metadata.publish_date = None
 
         # Generate file URL from the existing S3 object key
-        file_url = f"https://{s3_service.cloudflare_bucket_name}/{s3_object_key}"
+        file_url = s3_service.public_url(s3_object_key)
         logger.info(f"PDF already uploaded to S3: {file_url}")
 
         if isinstance(preview_result, Exception):

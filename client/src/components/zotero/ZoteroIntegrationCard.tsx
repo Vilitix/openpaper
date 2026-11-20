@@ -418,7 +418,7 @@ export function ZoteroIntegrationCard() {
 					Import journal articles, conference papers, and preprints from Zotero.{" "}
 					{hasAutoSync
 						? "New PDF annotations and new papers are synced automatically every 24 hours."
-						: <>Annotation sync is manual on the Basic plan. <a href="/pricing" className="underline underline-offset-2 hover:text-foreground transition-colors">Upgrade to Researcher</a> for automatic 24-hour sync.</>
+						: "Annotation sync runs automatically every 24 hours."
 					}
 				</p>
 					{paperUploadsRemaining !== null && paperUploadsTotal !== null && paperUploadsUsed !== null && (

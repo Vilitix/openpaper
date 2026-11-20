@@ -171,7 +171,7 @@ def _generate_script(
     # imported by modules that load before it.
     from app.llm.base import ModelType
     from app.llm.operations import operations
-    from app.llm.provider import LLMProvider, TextContent
+    from app.llm.provider import TextContent, default_provider
 
     if previous_script is None:
         text = COMPUTE_SCRIPT_USER_MESSAGE.format(
@@ -193,7 +193,7 @@ def _generate_script(
             table_path=TABLE_PATH, output_path=OUTPUT_PATH
         ),
         model_type=ModelType.DEFAULT,
-        provider=LLMProvider.GEMINI,
+        provider=default_provider(),
     )
     if not response or not response.text:
         return None

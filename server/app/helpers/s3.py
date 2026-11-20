@@ -25,6 +25,8 @@ AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME")
 CLOUDFLARE_BUCKET_NAME = os.environ.get("CLOUDFLARE_BUCKET_NAME")
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL")
+S3_PUBLIC_BASE_URL = os.environ.get("S3_PUBLIC_BASE_URL")
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 
@@ -38,18 +40,31 @@ class S3Service:
 
     def __init__(self):
         """Initialize S3 client"""
+        s3_config = {"addressing_style": "path"} if S3_ENDPOINT_URL else {}
         self.s3_client = boto3.client(
             "s3",  # type: ignore
             aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
             region_name=AWS_REGION,
+            endpoint_url=S3_ENDPOINT_URL or None,
             # Give up on a stalled connection after 10s rather than botocore's
             # default 60s. botocore makes several attempts, so at 60s each a
             # chat turn reading its PDF could be held open for minutes.
-            config=Config(connect_timeout=10),
+            config=Config(connect_timeout=10, s3=s3_config),
         )
         self.bucket_name = S3_BUCKET_NAME
         self.cloudflare_bucket_name = CLOUDFLARE_BUCKET_NAME
+
+    def public_url(self, object_key: str) -> str:
+        """Browser-reachable URL for an object.
+
+        With MinIO we serve from a public bucket through a host reachable by
+        the browser, rather than rewriting a presigned URL whose signature
+        covers the host.
+        """
+        if S3_PUBLIC_BASE_URL:
+            return f"{S3_PUBLIC_BASE_URL.rstrip('/')}/{object_key.lstrip('/')}"
+        return f"https://{self.cloudflare_bucket_name}/{object_key}"
 
     def _validate_pdf_url(self, url: str) -> bool:
         """
@@ -99,7 +114,7 @@ class S3Service:
                 )
 
             # Generate the URL for the uploaded file
-            file_url = f"https://{self.cloudflare_bucket_name}/{object_key}"
+            file_url = self.public_url(object_key)
 
             return object_key, file_url
 
@@ -138,7 +153,7 @@ class S3Service:
             )
 
             # Generate the URL for the uploaded file
-            file_url = f"https://{self.cloudflare_bucket_name}/{object_key}"
+            file_url = self.public_url(object_key)
 
             return object_key, file_url
 
@@ -206,6 +221,12 @@ class S3Service:
             str: Presigned URL or None if error
         """
         try:
+            # A public MinIO bucket has no need for a signature, and a
+            # presigned URL would carry an internal container host the browser
+            # cannot resolve.
+            if S3_PUBLIC_BASE_URL:
+                return self.public_url(object_key)
+
             url = self.s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": self.bucket_name, "Key": object_key},
@@ -557,7 +578,7 @@ class S3Service:
             )
 
             # Generate the URL for the duplicated file
-            file_url = f"https://{self.cloudflare_bucket_name}/{new_object_key}"
+            file_url = self.public_url(new_object_key)
 
             return new_object_key, file_url
 
@@ -578,10 +599,18 @@ class S3Service:
         """
         try:
             # Extract the object key from the URL
-            parsed_url = s3_url.split(f"https://{self.cloudflare_bucket_name}/")
-            if len(parsed_url) != 2:
+            prefixes = []
+            if S3_PUBLIC_BASE_URL:
+                prefixes.append(f"{S3_PUBLIC_BASE_URL.rstrip('/')}/")
+            prefixes.append(f"https://{self.cloudflare_bucket_name}/")
+
+            source_object_key = None
+            for prefix in prefixes:
+                if s3_url.startswith(prefix):
+                    source_object_key = s3_url[len(prefix):]
+                    break
+            if not source_object_key:
                 raise ValueError("Invalid S3 URL format")
-            source_object_key = parsed_url[1]
 
             return self.duplicate_file(source_object_key, new_filename)
 
