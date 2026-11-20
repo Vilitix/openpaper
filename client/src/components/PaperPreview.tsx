@@ -15,6 +15,7 @@ import { useHighlighterHighlights } from "@/components/pdf-viewer/useHighlighter
 import { useEffect, useState, useRef, useCallback } from "react";
 import { CitePaperButton } from "./CitePaperButton";
 import { Skeleton } from "@/components/ui/skeleton";
+import { normalizeAssetUrl } from "@/lib/assetUrl";
 import { Textarea } from "@/components/ui/textarea";
 
 function autoResize(el: HTMLTextAreaElement) {
@@ -327,7 +328,7 @@ export function PaperPreview({ paper, onClose, setPaper }: PaperPreviewProps) {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             key={paper.id}
-                            src={paper.preview_url}
+                            src={normalizeAssetUrl(paper.preview_url)}
                             alt="Paper preview"
                             className={`w-full h-auto rounded-md ${!previewLoaded ? "hidden" : ""}`}
                             onLoad={() => setPreviewLoaded(true)}

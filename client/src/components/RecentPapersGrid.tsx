@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, FileText, Clock } from "lucide-react";
 import { fetchFromApi } from "@/lib/api";
 import { PaperItem } from "@/lib/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
+import { normalizeAssetUrl } from "@/lib/assetUrl";
 
 interface RecentPapersGridProps {
     papers?: PaperItem[];
@@ -24,12 +24,11 @@ function PaperCardCompact({ paper }: { paper: PaperItem }) {
         >
             {paper.preview_url ? (
                 <div className="relative w-full aspect-[4/3] bg-muted">
-                    <Image
-                        src={paper.preview_url}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={normalizeAssetUrl(paper.preview_url)}
                         alt={paper.title || "Paper preview"}
-                        className="w-full h-full object-cover"
-                        fill
-                        unoptimized
+                        className="w-full h-full object-cover object-top"
                     />
                 </div>
             ) : (

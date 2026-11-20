@@ -13,6 +13,7 @@ import { handleStatusChange } from "./utils/paperUtils";
 import { fetchFromApi } from "@/lib/api";
 import { ProjectPaperPreview } from "./ProjectPaperPreview";
 import { CitePaperButton } from "./CitePaperButton";
+import { normalizeAssetUrl } from "@/lib/assetUrl";
 import React from "react";
 
 
@@ -209,7 +210,7 @@ export default function PaperCard({ paper, handleDelete, setPaper, minimalist = 
 								<div className={`md:w-1/5 bg-gray-100 dark:bg-gray-800 ${minimalist ? 'pt-2 px-2 pb-0' : 'pt-4 px-4 pb-0'} flex items-end justify-center border-b border-gray-200 dark:border-gray-700 rounded-t-2xl rounded-b-none overflow-hidden`}>
 									{/* eslint-disable-next-line @next/next/no-img-element */}
 									<img
-										src={paper.preview_url}
+										src={normalizeAssetUrl(paper.preview_url)}
 										title={paper.title}
 										alt={paper.title}
 										className={`${minimalist ? 'max-h-24 !my-0' : 'max-h-48'} w-full object-cover object-top shadow-sm`}
