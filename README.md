@@ -1,3 +1,22 @@
+# Open Paper — Homelab Fork
+
+This is a self-hosted, single-user fork of [khoj-ai/openpaper](https://github.com/khoj-ai/openpaper), maintained for a private homelab. It is not the upstream project and is not supported by Khoj.
+
+## What is different in this fork
+
+- Deployed with Docker Compose from the homelab repo (`agent/docker-compose.yml`).
+- Uses only an OpenCode Go API key (`OPENCODE_GO_API_KEY`) with an OpenAI-compatible endpoint:
+  - chat/default: `deepseek-v4.1-flash`
+  - fast tasks: `glm-5.3-flash`
+- No subscriptions, credits, referral system, pricing pages, or usage limits.
+- Single-user auto-authentication; no Google OAuth or mail provider required.
+- Local object storage via MinIO/Silo, plus Postgres, RabbitMQ, and Redis.
+- No Gemini, Anthropic, Stripe, PostHog, Firecrawl, or E2B credentials are required to boot.
+
+The upstream README follows for feature and project context.
+
+---
+
 # ![Open Paper](https://raw.githubusercontent.com/sabaimran/openpaper/refs/heads/master/client/src/app/openpaper.svg) Open Paper
 
 **The fastest way to annotate and deeply understand research papers.**
